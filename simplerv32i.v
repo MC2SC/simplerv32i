@@ -124,7 +124,7 @@ module SimpleRV32I
 				// for (i = 0; i < regfile_size; i = i+1)
 				// 	cpu_regs_next[i] 	= 0;
 
-				cpu_regs_next[2] 		= 4096; // stack pointer default value
+				cpu_regs_next[2] 		= 4096; // stack pointer default value - currently it's hard coded
 			end
 			cpu_state_start: begin
 				if(mem_vld) begin
