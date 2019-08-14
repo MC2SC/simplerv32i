@@ -1,0 +1,1 @@
+- Please install RV32I RISC-V toolchain to compile the example program (see [here](https://github.com/cliffordwolf/picorv32#building-a-pure-rv32i-toolchain) for reference)
