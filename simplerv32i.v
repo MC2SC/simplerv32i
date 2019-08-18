@@ -52,7 +52,7 @@ module SimpleRV32I
 
 );
 
-	reg mem_valid, mem_instr;
+//	reg mem_valid, mem_instr;
 
 	localparam integer regfile_size = 32;
 	localparam integer regindex_bits = 5;
@@ -73,7 +73,7 @@ module SimpleRV32I
 	localparam cpu_state_init	   = 8'b00000001;
 
 	reg [7:0] cpu_state_current, cpu_state_next;
-	
+
 	always@(posedge clk) begin
 		if(reset) begin
 			cpu_state_current 			<= cpu_state_init;
@@ -98,14 +98,24 @@ module SimpleRV32I
 	end
 
 	// AR# 20391 - error occurs when I try to use the Verilog 2001 combinational sensitivity list (always @*) when reading a two-dimensional array:
-	always @(*) begin
+	always @(	cpu_regs_current[0], cpu_regs_current[1], cpu_regs_current[2], cpu_regs_current[3],
+				cpu_regs_current[4], cpu_regs_current[5], cpu_regs_current[6], cpu_regs_current[7],
+				cpu_regs_current[8], cpu_regs_current[9], cpu_regs_current[10], cpu_regs_current[11],
+				cpu_regs_current[12], cpu_regs_current[13], cpu_regs_current[14], cpu_regs_current[15],
+				cpu_regs_current[16], cpu_regs_current[17], cpu_regs_current[18], cpu_regs_current[19],
+				cpu_regs_current[20], cpu_regs_current[21], cpu_regs_current[22], cpu_regs_current[23],
+				cpu_regs_current[24], cpu_regs_current[25], cpu_regs_current[26], cpu_regs_current[27],
+				cpu_regs_current[28], cpu_regs_current[29], cpu_regs_current[30], cpu_regs_current[31],
+				debug_en, mem_ready, mem_rdata, mem_vld,
+				reg_pc_current, reg_op1_current, reg_op2_current,
+				mem_rdata_q_current, cpu_state_current) begin
 		cpu_state_next 		= cpu_state_current;
 		reg_pc_next 			= reg_pc_current;
 		reg_op1_next 			= reg_op1_current;
 		reg_op2_next 			= reg_op2_current;
 		mem_rdata_q_next 		= mem_rdata_q_current;
-		mem_valid 				= 0;
-		mem_instr 				= 0;
+		// mem_valid 				= 0;
+		// mem_instr 				= 0;
 		mem_addr					= 0;
 		mem_wdata 				= 0;
 		mem_wstrb 				= 0;
@@ -121,24 +131,24 @@ module SimpleRV32I
 				reg_op2_next 			= 0;
 				cpu_state_next 		= cpu_state_start;
 				
-				// for (i = 0; i < regfile_size; i = i+1)
-				// 	cpu_regs_next[i] 	= 0;
+				for (i = 0; i < regfile_size; i = i+1)
+					cpu_regs_next[i] 	= 0;
 
 				cpu_regs_next[2] 		= 4096; // stack pointer default value - currently it's hard coded
 			end
 			cpu_state_start: begin
 				if(mem_vld) begin
-					if(debug_en && mem_ready) begin
+					// if(debug_en && mem_ready) begin
 						mem_req = 1'b1;
 						mem_addr  		= (reg_pc_current);
 						cpu_state_next = cpu_state_fetch;
-					end
+					// end
 				end
 			end
 			cpu_state_fetch: begin
 				if(mem_vld) begin
 					mem_rdata_q_next 	= mem_rdata;
-					$display("mem_rdata is %x at time %d", mem_rdata, $time);
+					// $display("mem_rdata is %x at time %d", mem_rdata, $time);
 					cpu_state_next 	= cpu_state_decode;
 				end
 			end
@@ -153,7 +163,7 @@ module SimpleRV32I
 					// $display("arithmetic instruction");
 					cpu_state_next = cpu_state_alu_exec;
 					if(mem_rdata_q_current[14:12] == 3'b000) begin // addi instruction - I-type
-						$display("addi at %d $time", $time);
+						// $display("addi at %d $time", $time);
 						reg_op1_next = cpu_regs_current[mem_rdata_q_current[19:15]];
 						reg_op2_next = $signed(mem_rdata_q_current[31:20]);
 					end
@@ -272,7 +282,7 @@ module SimpleRV32I
 					end
 					else if(mem_rdata_q_current[14:12] == 3'b001) begin // bne instruction - SB-type
 						if(cpu_regs_current[mem_rdata_q_current[24:20]] != cpu_regs_current[mem_rdata_q_current[19:15]]) begin
-							// $display("bne instruction %d %d", cpu_regs_current[mem_rdata_q_current[24:20]], cpu_regs_current[mem_rdata_q_current[19:15]]);																				
+							// $display("bne instruction %d %d %d %d", mem_rdata_q_current[24:20], cpu_regs_current[mem_rdata_q_current[24:20]], mem_rdata_q_current[19:15], cpu_regs_current[mem_rdata_q_current[19:15]]);																				
 							reg_pc_next = reg_pc_current + {{20{mem_rdata_q_current[31]}},mem_rdata_q_current[7],mem_rdata_q_current[30:25],mem_rdata_q_current[11:8],1'b0};
 						end
 						else begin
@@ -314,12 +324,12 @@ module SimpleRV32I
 					end
 					else begin
 						$display("unknown instruction");
-						$finish;
+						// $finish;
 					end
 				end
 				else begin
 					$display("Undefined Instruction");
-					$finish;
+					// $finish;
 				end
 			end
 			cpu_state_alu_exec: begin
@@ -360,7 +370,7 @@ module SimpleRV32I
 					end
 					else if(mem_rdata_q_current[6:5] == 2'b00 && mem_rdata_q_current[4:2] == 3'b100) begin // arithmetic instructions
 						if(mem_rdata_q_current[14:12] == 3'b000) begin // addi instruction - I-type
-							$display("%d %d %d", mem_rdata_q_current[11:7], reg_op1_current, reg_op2_current);
+							// $display("%d %d %d", mem_rdata_q_current[11:7], reg_op1_current, reg_op2_current);
 							cpu_regs_next[mem_rdata_q_current[11:7]] = reg_op1_current + reg_op2_current;
 						end
 						else if(mem_rdata_q_current[14:12] == 3'b010) begin // slti instruction - I-type
@@ -389,20 +399,27 @@ module SimpleRV32I
 						end
 					end
 					else if(mem_rdata_q_current[6:5] == 2'b00 && mem_rdata_q_current[4:2] == 3'b000) begin // memory instructions
-						if(mem_rdata_q_current[14:12] == 3'b010) begin // lw instruction - I-type
-							cpu_regs_next[mem_rdata_q_current[11:7]]	= mem_rdata;
+						if(mem_vld) begin
+
+							if(mem_rdata_q_current[14:12] == 3'b010) begin // lw instruction - I-type
+								cpu_regs_next[mem_rdata_q_current[11:7]]	= mem_rdata;
+							end
+							else if(mem_rdata_q_current[14:12] == 3'b000) begin // lb instruction - I-type
+								cpu_regs_next[mem_rdata_q_current[11:7]]	= $signed(mem_rdata[7:0]);
+							end
+							else if(mem_rdata_q_current[14:12] == 3'b001) begin // lh instruction - I-type
+								cpu_regs_next[mem_rdata_q_current[11:7]]	= $signed(mem_rdata[15:0]);
+							end
+							else if(mem_rdata_q_current[14:12] == 3'b100) begin // lbu instruction - I-type
+								cpu_regs_next[mem_rdata_q_current[11:7]]	= $signed(mem_rdata[7:0]);
+							end
+							else if(mem_rdata_q_current[14:12] == 3'b101) begin // lhu instruction - I-type
+								cpu_regs_next[mem_rdata_q_current[11:7]]	= $signed(mem_rdata[15:0]);
+							end
 						end
-						else if(mem_rdata_q_current[14:12] == 3'b000) begin // lb instruction - I-type
-							cpu_regs_next[mem_rdata_q_current[11:7]]	= $signed(mem_rdata[7:0]);
-						end
-						else if(mem_rdata_q_current[14:12] == 3'b001) begin // lh instruction - I-type
-							cpu_regs_next[mem_rdata_q_current[11:7]]	= $signed(mem_rdata[15:0]);
-						end
-						else if(mem_rdata_q_current[14:12] == 3'b100) begin // lbu instruction - I-type
-							cpu_regs_next[mem_rdata_q_current[11:7]]	= mem_rdata[7:0];
-						end
-						else if(mem_rdata_q_current[14:12] == 3'b101) begin // lhu instruction - I-type
-							cpu_regs_next[mem_rdata_q_current[11:7]]	= mem_rdata[15:0];
+						else begin
+							cpu_state_next = cpu_state_alu_exec;
+							reg_pc_next 	= reg_pc_current;
 						end
 					end
 				end
